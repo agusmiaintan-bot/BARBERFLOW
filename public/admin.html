@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BARBERFLOW – Admin Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 3em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .subtitle {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0,0,0,0.3);
+        }
+
+        .card h3 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            font-family: inherit;
+            transition: border-color 0.3s ease;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.2);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 25px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1em;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            font-weight: 600;
+            width: 100%;
+            margin-bottom: 12px;
+        }
+
+        button:hover {
+            transform: scale(1.02);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        ul {
+            list-style: none;
+        }
+
+        li {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid #667eea;
+            transition: all 0.3s ease;
+        }
+
+        li:hover {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            transform: translateX(5px);
+        }
+
+        .full-width {
+            grid-column: 1 / -1;
+        }
+
+        .chat-container {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        #chatAdmin {
+            background: #f5f7fa;
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 15px;
+            height: 250px;
+            overflow-y: auto;
+            border: 2px solid #e0e0e0;
+        }
+
+        #chatAdmin p {
+            margin: 8px 0;
+            padding: 10px;
+            border-radius: 6px;
+            word-wrap: break-word;
+        }
+
+        #chatAdmin p b:first-child {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .room-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        #ruangAktifDisplay {
+            font-size: 1.2em;
+            background: rgba(255,255,255,0.2);
+            padding: 8px 15px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+
+        @media (max-width: 768px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>💈 BARBERFLOW</h1>
+        <p class="subtitle">Admin Dashboard</p>
+    </header>
+
+    <div class="grid">
+        <!-- Tambah Antrian -->
+        <div class="card">
+            <h3>➕ Tambah Antrian Baru</h3>
+            <input id="nama" placeholder="Nama pelanggan" type="text">
+            <input id="email" placeholder="Email pelanggan" type="email">
+            <input id="barber" placeholder="Nama barber" type="text">
+            <button id="btnTambah">Tambahkan Antrian</button>
+        </div>
+
+        <!-- Panggil Antrian -->
+        <div class="card">
+            <h3>📣 Kelola Antrian</h3>
+            <button id="btnPanggil">Panggil Antrian Berikutnya</button>
+            <h4 style="margin-top: 20px; color: #666; margin-bottom: 15px;">Daftar Antrian Menunggu</h4>
+            <ul id="daftarAntrian"></ul>
+        </div>
+
+        <!-- Chat Pelanggan -->
+        <div class="card full-width">
+            <h3>💬 Chat Pelanggan</h3>
+            <div class="room-display">
+                <strong>Ruang Aktif:</strong> <span id="ruangAktifDisplay">-</span>
+            </div>
+            <div id="chatAdmin" class="chat-admin"></div>
+            <input id="balasanAdmin" placeholder="Ketik balasan..." type="text">
+            <button onclick="balas()">Kirim Balasan</button>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io("http://localhost:3001");
+
+    const daftar = document.getElementById("daftarAntrian");
+    const tombolTambah = document.getElementById("btnTambah");
+    const tombolPanggil = document.getElementById("btnPanggil");
+    const inputNama = document.getElementById("nama");
+    const inputEmail = document.getElementById("email");
+    const inputBarber = document.getElementById("barber");
+
+    // Ambil data awal
+    socket.emit("ambil-antrian");
+
+    // Admin join ke admin-room untuk terima pesan dari pelanggan
+    socket.emit("gabung-admin-room");
+
+    // Tampilkan daftar antrian
+    socket.on("data-antrian", data => {
+        daftar.innerHTML = "";
+        data.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = `No ${item.nomor} - ${item.nama}`;
+            daftar.appendChild(li);
+        });
+    });
+
+    // Tambah antrian
+    tombolTambah.addEventListener("click", () => {
+        fetch("/api/antrian/tambah", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+                nama: inputNama.value,
+                email: inputEmail.value,
+                barber: inputBarber.value
+            })
+        })
+        .then(res => res.json())
+        .then(data => {
+            alert(data.pesan || "Antrian ditambahkan");
+            inputNama.value = "";
+            inputEmail.value = "";
+            inputBarber.value = "";
+        })
+        .catch(err => console.error(err));
+    });
+
+    // Klik panggil
+    tombolPanggil.addEventListener("click", () => {
+        socket.emit("panggil-antrian");
+    });
+
+    // Setelah dipanggil, refresh daftar
+    socket.on("antrian-dipanggil", () => {
+        socket.emit("ambil-antrian");
+    });
+
+    // Refresh daftar saat ada antrian baru
+    socket.on("antrian-baru", () => {
+        socket.emit("ambil-antrian");
+    });
+</script>
+
+<script>
+let ruangAktif = null;
+
+socket.on("chat-admin", data => {
+    // data berisi { room, pesan } dari pelanggan
+    const box = document.getElementById("chatAdmin");
+    ruangAktif = data.room;
+    document.getElementById("ruangAktifDisplay").textContent = data.room;
+    
+    const msg = document.createElement("p");
+    msg.innerHTML = `<b style="color:#667eea;">👤 Pelanggan:</b> ${data.pesan}`;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+});
+
+function balas() {
+    const input = document.getElementById("balasanAdmin");
+    if (!ruangAktif) {
+        alert("Belum ada pesan dari pelanggan");
+        return;
+    }
+    if (!input.value.trim()) {
+        alert("Ketik pesan terlebih dahulu");
+        return;
+    }
+    socket.emit("balas-ke-pelanggan", { room: ruangAktif, pesan: input.value });
+
+    const box = document.getElementById("chatAdmin");
+    const msg = document.createElement("p");
+    msg.innerHTML = `<b style="color:#764ba2;">👨‍💼 Anda:</b> ${input.value}`;
+    box.appendChild(msg);
+    box.scrollTop = box.scrollHeight;
+    input.value = "";
+}
+</script>
+
+</body>
+</html>

@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>BARBERFLOW – Layar Antrian</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            color: #fff;
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 50px;
+        }
+
+        h1 {
+            font-size: 3.5em;
+            margin-bottom: 15px;
+            text-shadow: 3px 3px 10px rgba(0,0,0,0.5);
+            letter-spacing: 2px;
+        }
+
+        .subtitle {
+            font-size: 1.2em;
+            opacity: 0.8;
+            margin-bottom: 10px;
+        }
+
+        .main-display {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 20px;
+            padding: 60px;
+            text-align: center;
+            margin-bottom: 50px;
+            box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
+            }
+            50% {
+                box-shadow: 0 20px 80px rgba(102, 126, 234, 0.8);
+            }
+        }
+
+        .display-label {
+            font-size: 1.5em;
+            opacity: 0.9;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        #dipanggil {
+            font-size: 5em;
+            font-weight: bold;
+            text-shadow: 4px 4px 20px rgba(0,0,0,0.4);
+            animation: scaleInOut 0.6s ease-in-out;
+        }
+
+        @keyframes scaleInOut {
+            0%, 100% {
+                transform: scale(1);
+            }
+            50% {
+                transform: scale(1.1);
+            }
+        }
+
+        .queue-section {
+            margin-top: 30px;
+        }
+
+        .queue-section h2 {
+            font-size: 2em;
+            text-align: center;
+            margin-bottom: 30px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        ul {
+            list-style: none;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        li {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 25px;
+            border-radius: 15px;
+            color: #1a1a2e;
+            font-weight: 600;
+            font-size: 1.2em;
+            transition: all 0.3s ease;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            text-align: center;
+            border-left: 5px solid #667eea;
+        }
+
+        li:hover {
+            transform: translateY(-10px) scale(1.05);
+            box-shadow: 0 20px 50px rgba(102, 126, 234, 0.5);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-left-color: #fff;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5em;
+            }
+
+            .main-display {
+                padding: 40px;
+            }
+
+            #dipanggil {
+                font-size: 3.5em;
+            }
+
+            ul {
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            }
+
+            li {
+                font-size: 1em;
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>💈 BARBERFLOW</h1>
+        <p class="subtitle">Layar Antrian Pelanggan</p>
+    </header>
+
+    <div class="main-display">
+        <p class="display-label">📞 Nomor Sedang Dipanggil</p>
+        <div id="dipanggil">—</div>
+    </div>
+
+    <div class="queue-section">
+        <h2>📋 Daftar Antrian Menunggu</h2>
+        <ul id="daftarAntrian"></ul>
+    </div>
+</div>
+
+<!-- SOCKET CLIENT -->
+<script src="/socket.io/socket.io.js"></script>
+
+<script>
+    const socket = io("http://localhost:3001");
+
+    // Minta data awal
+    socket.emit("ambil-antrian");
+
+    // Terima daftar antrian
+    socket.on("data-antrian", data => {
+        const daftar = document.getElementById("daftarAntrian");
+        daftar.innerHTML = "";
+
+        data.forEach(item => {
+            const li = document.createElement("li");
+            li.textContent = `No ${item.nomor} - ${item.nama}`;
+            daftar.appendChild(li);
+        });
+    });
+
+    // Terima antrian yang dipanggil
+    socket.on("antrian-dipanggil", data => {
+        document.getElementById("dipanggil").textContent =
+            `No ${data.nomor} - ${data.nama}`;
+
+        // Refresh daftar setelah dipanggil
+        socket.emit("ambil-antrian");
+    });
+
+    // Terima antrian baru
+    socket.on("antrian-baru", data => {
+        // ambil ulang daftar antrian tanpa refresh
+        socket.emit("ambil-antrian");
+    });
+</script>
+
+</body>
+</html>
