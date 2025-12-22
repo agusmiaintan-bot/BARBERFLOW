@@ -1,15 +1,25 @@
 {
   "version": 2,
+  "env": [
+    "MONGO_URI",
+    "EMAIL_PENGIRIM",
+    "PASSWORD_EMAIL",
+    "NODE_ENV"
+  ],
   "builds": [
     {
-      "src": "api/**/*.js",
+      "src": "server.js",
       "use": "@vercel/node"
     }
   ],
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "dest": "/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/server.js"
     }
   ]
 }

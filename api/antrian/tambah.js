@@ -1,16 +1,5 @@
 const mongoose = require('mongoose');
-
-// Model Antrian
-const antrianSchema = new mongoose.Schema({
-    nomor: { type: Number, required: true },
-    nama: { type: String, required: true },
-    email: { type: String },
-    barber: { type: String },
-    status: { type: String, default: 'menunggu' },
-    created_at: { type: Date, default: Date.now }
-});
-
-const Antrian = mongoose.models.Antrian || mongoose.model('Antrian', antrianSchema);
+const Antrian = require('../../model/antrian');
 
 // MongoDB connection
 let cached = global.mongoose;
@@ -27,9 +16,10 @@ async function connectDB() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            maxPoolSize: 10,
         };
 
-        cached.promise = mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/barberflow', opts)
+        cached.promise = mongoose.connect(process.env.MONGO_URI, opts)
             .then((mongoose) => {
                 return mongoose;
             });
@@ -59,9 +49,10 @@ module.exports = async (req, res) => {
     try {
         await connectDB();
 
-        const { nama, email, barber } = req.body;
+        const { nama, nama_pelanggan, email, barber, layanan } = req.body;
+        const nama_final = nama || nama_pelanggan;
 
-        if (!nama) {
+        if (!nama_final || nama_final.trim() === '') {
             return res.status(400).json({ error: 'Nama pelanggan wajib diisi' });
         }
 
@@ -71,14 +62,16 @@ module.exports = async (req, res) => {
 
         const newAntrian = await Antrian.create({
             nomor: nomorBaru,
-            nama: nama,
-            email: email || '',
-            barber: barber || '',
+            nama_pelanggan: nama_final.trim(),
+            email: email?.trim() || '',
+            barber: barber?.trim() || '',
+            layanan: layanan?.trim() || '',
             status: 'menunggu'
         });
 
         return res.status(201).json({
-            pesan: 'Antrian berhasil ditambahkan',
+            success: true,
+            message: 'Antrian berhasil ditambahkan',
             data: newAntrian
         });
     } catch (error) {

@@ -1,16 +1,5 @@
 const mongoose = require('mongoose');
-
-// Model Antrian
-const antrianSchema = new mongoose.Schema({
-    nomor: { type: Number, required: true },
-    nama: { type: String, required: true },
-    email: { type: String },
-    barber: { type: String },
-    status: { type: String, default: 'menunggu' },
-    created_at: { type: Date, default: Date.now }
-});
-
-const Antrian = mongoose.models.Antrian || mongoose.model('Antrian', antrianSchema);
+const Antrian = require('../../model/antrian');
 
 // MongoDB connection
 let cached = global.mongoose;
@@ -27,9 +16,10 @@ async function connectDB() {
     if (!cached.promise) {
         const opts = {
             bufferCommands: false,
+            maxPoolSize: 10,
         };
 
-        cached.promise = mongoose.connect(process.env.MONGO_URI || 'mongodb://localhost:27017/barberflow', opts)
+        cached.promise = mongoose.connect(process.env.MONGO_URI, opts)
             .then((mongoose) => {
                 return mongoose;
             });
@@ -55,10 +45,23 @@ module.exports = async (req, res) => {
     try {
         await connectDB();
 
-        // GET - Lihat semua antrian
+        // GET - Lihat semua antrian dengan pagination & filter
         if (req.method === 'GET') {
-            const data = await Antrian.find().sort({ created_at: 1 });
-            return res.status(200).json(data);
+            const { status, skip = 0, limit = 100 } = req.query;
+            const filter = status ? { status } : {};
+
+            const data = await Antrian.find(filter)
+                .sort({ created_at: -1 })
+                .skip(parseInt(skip))
+                .limit(parseInt(limit));
+
+            const total = await Antrian.countDocuments(filter);
+
+            return res.status(200).json({
+                success: true,
+                data,
+                pagination: { total, skip: parseInt(skip), limit: parseInt(limit) }
+            });
         }
 
         // Metode lain tidak didukung di endpoint ini
