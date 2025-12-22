@@ -1,242 +1,126 @@
 const express = require('express');
 const router = express.Router();
 const Antrian = require('../model/antrian');
-const { connectDB } = require('../konfigurasi/koneksiMongo');
 
 /**
- * Middleware untuk connect ke MongoDB
- */
-router.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (error) {
-        console.error('Database connection error:', error);
-        res.status(503).json({ 
-            error: 'Database connection failed',
-            message: 'Service temporarily unavailable' 
-        });
-    }
-});
-
-/**
- * POST /api/antrian/add atau /api/antrian/tambah
- * Tambah antrian baru
+ * POST /api/antrian/add
  */
 router.post(['/add', '/tambah'], async (req, res) => {
-    try {
-        const { nama, nama_pelanggan, email, barber, layanan } = req.body;
-        const nama_final = nama || nama_pelanggan;
+  try {
+    const { nama, nama_pelanggan, email, barber, layanan } = req.body;
+    const nama_final = nama || nama_pelanggan;
 
-        // Validasi input
-        if (!nama_final || nama_final.trim() === '') {
-            return res.status(400).json({ 
-                error: 'Validation Error',
-                message: 'Nama pelanggan wajib diisi' 
-            });
-        }
-
-        // Generate nomor antrian otomatis
-        const lastAntrian = await Antrian.findOne().sort({ nomor: -1 });
-        const nomorBaru = lastAntrian ? lastAntrian.nomor + 1 : 1;
-
-        const newAntrian = await Antrian.create({
-            nomor: nomorBaru,
-            nama_pelanggan: nama_final.trim(),
-            email: email?.trim() || '',
-            barber: barber?.trim() || '',
-            layanan: layanan?.trim() || '',
-            status: 'menunggu'
-        });
-
-        return res.status(201).json({
-            success: true,
-            message: 'Antrian berhasil ditambahkan',
-            data: newAntrian
-        });
-    } catch (error) {
-        console.error('Error tambah antrian:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
+    if (!nama_final || !nama_final.trim()) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Nama pelanggan wajib diisi'
+      });
     }
+
+    const last = await Antrian.findOne().sort({ nomor: -1 });
+    const nomor = last ? last.nomor + 1 : 1;
+
+    const antrian = await Antrian.create({
+      nomor,
+      nama_pelanggan: nama_final.trim(),
+      email: email?.trim() || '',
+      barber: barber?.trim() || '',
+      layanan: layanan?.trim() || '',
+      status: 'menunggu'
+    });
+
+    res.status(201).json({
+      success: true,
+      message: 'Antrian berhasil ditambahkan',
+      data: antrian
+    });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 /**
  * GET /api/antrian
- * Lihat semua antrian
  */
 router.get('/', async (req, res) => {
-    try {
-        const { status, skip = 0, limit = 100 } = req.query;
-        const filter = status ? { status } : {};
+  try {
+    const { status, skip = 0, limit = 100 } = req.query;
+    const filter = status ? { status } : {};
 
-        const data = await Antrian.find(filter)
-            .sort({ created_at: -1 })
-            .skip(parseInt(skip))
-            .limit(parseInt(limit));
+    const data = await Antrian.find(filter)
+      .sort({ created_at: -1 })
+      .skip(Number(skip))
+      .limit(Number(limit));
 
-        const total = await Antrian.countDocuments(filter);
+    const total = await Antrian.countDocuments(filter);
 
-        return res.status(200).json({
-            success: true,
-            data,
-            pagination: {
-                total,
-                skip: parseInt(skip),
-                limit: parseInt(limit)
-            }
-        });
-    } catch (error) {
-        console.error('Error get antrian:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
-    }
+    res.json({
+      success: true,
+      data,
+      pagination: { total, skip: Number(skip), limit: Number(limit) }
+    });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 /**
  * GET /api/antrian/:id
- * Lihat detail antrian spesifik
  */
 router.get('/:id', async (req, res) => {
-    try {
-        const antrian = await Antrian.findById(req.params.id);
-        
-        if (!antrian) {
-            return res.status(404).json({ 
-                error: 'Not Found',
-                message: 'Antrian tidak ditemukan' 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            data: antrian
-        });
-    } catch (error) {
-        console.error('Error get antrian detail:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
+  try {
+    const data = await Antrian.findById(req.params.id);
+    if (!data) {
+      return res.status(404).json({ error: 'Not Found' });
     }
+    res.json({ success: true, data });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 /**
- * PATCH /api/antrian/:id atau PUT /api/antrian/status/:id
- * Update status antrian
+ * PATCH /api/antrian/:id
  */
 router.patch(['/:id', '/status/:id'], async (req, res) => {
-    try {
-        const { status } = req.body;
-        const allowedStatus = ['menunggu', 'dilayani', 'selesai', 'batal'];
+  try {
+    const { status } = req.body;
+    const allowed = ['menunggu', 'dilayani', 'selesai', 'batal'];
 
-        if (!status || !allowedStatus.includes(status)) {
-            return res.status(400).json({ 
-                error: 'Validation Error',
-                message: `Status harus salah satu dari: ${allowedStatus.join(', ')}` 
-            });
-        }
-
-        const updated = await Antrian.findByIdAndUpdate(
-            req.params.id,
-            { status, updated_at: Date.now() },
-            { new: true, runValidators: true }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ 
-                error: 'Not Found',
-                message: 'Antrian tidak ditemukan' 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Status antrian berhasil diupdate',
-            data: updated
-        });
-    } catch (error) {
-        console.error('Error update status antrian:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
+    if (!allowed.includes(status)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: `Status harus salah satu dari ${allowed.join(', ')}`
+      });
     }
-});
 
-/**
- * PUT /api/antrian/:id
- * Update antrian lengkap
- */
-router.put('/:id', async (req, res) => {
-    try {
-        const { nama_pelanggan, email, barber, layanan, status } = req.body;
+    const updated = await Antrian.findByIdAndUpdate(
+      req.params.id,
+      { status, updated_at: Date.now() },
+      { new: true }
+    );
 
-        const updateData = {};
-        if (nama_pelanggan) updateData.nama_pelanggan = nama_pelanggan.trim();
-        if (email) updateData.email = email.trim();
-        if (barber) updateData.barber = barber.trim();
-        if (layanan) updateData.layanan = layanan.trim();
-        if (status) updateData.status = status;
+    if (!updated) return res.status(404).json({ error: 'Not Found' });
 
-        const updated = await Antrian.findByIdAndUpdate(
-            req.params.id,
-            { ...updateData, updated_at: Date.now() },
-            { new: true, runValidators: true }
-        );
-
-        if (!updated) {
-            return res.status(404).json({ 
-                error: 'Not Found',
-                message: 'Antrian tidak ditemukan' 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Antrian berhasil diupdate',
-            data: updated
-        });
-    } catch (error) {
-        console.error('Error update antrian:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
-    }
+    res.json({ success: true, data: updated });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 /**
  * DELETE /api/antrian/:id
- * Hapus antrian
  */
 router.delete('/:id', async (req, res) => {
-    try {
-        const deleted = await Antrian.findByIdAndDelete(req.params.id);
+  try {
+    const deleted = await Antrian.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: 'Not Found' });
 
-        if (!deleted) {
-            return res.status(404).json({ 
-                error: 'Not Found',
-                message: 'Antrian tidak ditemukan' 
-            });
-        }
-
-        return res.status(200).json({
-            success: true,
-            message: 'Antrian berhasil dihapus',
-            data: deleted
-        });
-    } catch (error) {
-        console.error('Error delete antrian:', error);
-        return res.status(500).json({ 
-            error: 'Server Error',
-            message: error.message 
-        });
-    }
+    res.json({ success: true, data: deleted });
+  } catch (err) {
+    res.status(500).json({ error: 'Server Error', message: err.message });
+  }
 });
 
 module.exports = router;
