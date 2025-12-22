@@ -1,5 +1,5 @@
 {
-  "name": "barberflow-backend",
+  "name": "backend",
   "version": "1.0.0",
   "description": "Backend API untuk sistem antrian barbershop BARBERFLOW",
   "main": "server.js",
