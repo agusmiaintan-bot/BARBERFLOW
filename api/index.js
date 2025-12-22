@@ -63,6 +63,9 @@ app.use('/api/antrian', antrianRoutes);
 const chatbotRoutes = require('../routes/chatbot');
 app.use('/api/chatbot', chatbotRoutes);
 
+const chatRoutes = require('../routes/chat');
+app.use('/api/chat', chatRoutes);
+
 /* ======================
    EXPORT (WAJIB)
 ====================== */
