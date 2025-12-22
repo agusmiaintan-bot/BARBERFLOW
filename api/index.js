@@ -5,73 +5,93 @@ const path = require('path');
 
 const app = express();
 
-// Middleware
+/* =======================
+   MIDDLEWARE
+======================= */
 app.use(cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || ['*'],
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+  origin: process.env.ALLOWED_ORIGINS
+    ? process.env.ALLOWED_ORIGINS.split(',')
+    : '*',
+  methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
 }));
+
 app.use(express.json());
 
-// Serve static files dari folder public
-app.use(express.static(path.join(__dirname, '../public')));
+/* =======================
+   STATIC FILES
+   (AMAN, tapi OPSIONAL)
+======================= */
+app.use(express.static(path.join(process.cwd(), 'public')));
 
-// Database connection utility
+/* =======================
+   DATABASE (MONGODB)
+======================= */
 let cached = global.mongoose;
 
 if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
+  cached = global.mongoose = { conn: null, promise: null };
 }
 
 async function connectDB() {
-    if (cached.conn) {
-        return cached.conn;
-    }
+  if (cached.conn) return cached.conn;
 
-    if (!cached.promise) {
-        const opts = {
-            bufferCommands: false,
-            maxPoolSize: 10,
-            serverSelectionTimeoutMS: 5000,
-        };
+  if (!cached.promise) {
+    cached.promise = mongoose.connect(process.env.MONGO_URI, {
+      bufferCommands: false,
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 5000,
+    }).then((mongoose) => mongoose);
+  }
 
-        cached.promise = mongoose.connect(process.env.MONGO_URI, opts)
-            .then(() => mongoose);
-    }
-
-    cached.conn = await cached.promise;
-    return cached.conn;
+  cached.conn = await cached.promise;
+  return cached.conn;
 }
 
-// Health check
-app.get('/api/health', (req, res) => {
-    res.status(200).json({ status: 'OK' });
-});
-
-// Import routes
-const antrianRoutes = require('../routes/antrian');
-
-// Middleware untuk connect DB
+/* =======================
+   DB CONNECTION MIDDLEWARE
+======================= */
 app.use(async (req, res, next) => {
-    try {
-        await connectDB();
-        next();
-    } catch (error) {
-        res.status(503).json({ error: 'Database connection failed' });
-    }
+  try {
+    await connectDB();
+    next();
+  } catch (err) {
+    console.error(err);
+    res.status(503).json({ error: 'Database connection failed' });
+  }
 });
 
-// Routes
+/* =======================
+   HEALTH CHECK (PENTING)
+======================= */
+app.get('/api/health', (req, res) => {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Backend Barberflow running'
+  });
+});
+
+/* =======================
+   ROUTES
+======================= */
+const antrianRoutes = require('../routes/antrian');
 app.use('/api/antrian', antrianRoutes);
 
-// Tambahkan route untuk halaman utama (sebelum 404 handler)
+/* =======================
+   ROOT (BIAR TIDAK Cannot GET /)
+======================= */
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public/index.html'));
+  res.status(200).send('Barberflow Backend API is running 🚀');
 });
 
-// 404
+/* =======================
+   404 HANDLER
+======================= */
 app.use((req, res) => {
-    res.status(404).json({ error: 'Endpoint tidak ditemukan' });
+  res.status(404).json({ error: 'Endpoint tidak ditemukan' });
 });
 
+/* =======================
+   EXPORT (WAJIB UNTUK VERCEL)
+======================= */
 module.exports = app;
