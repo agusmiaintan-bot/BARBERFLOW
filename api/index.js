@@ -60,6 +60,9 @@ app.use(async (req, res, next) => {
 const antrianRoutes = require('../routes/antrian');
 app.use('/api/antrian', antrianRoutes);
 
+const chatbotRoutes = require('../routes/chatbot');
+app.use('/api/chatbot', chatbotRoutes);
+
 /* ======================
    EXPORT (WAJIB)
 ====================== */
