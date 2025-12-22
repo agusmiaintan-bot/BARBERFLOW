@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
+const path = require('path');
 
 const app = express();
 
@@ -11,6 +12,9 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
+
+// Serve static files dari folder public
+app.use(express.static(path.join(__dirname, '../public')));
 
 // Database connection utility
 let cached = global.mongoose;
@@ -45,7 +49,7 @@ app.get('/api/health', (req, res) => {
 });
 
 // Import routes
-const antrianRoutes = require('./routes/antrian');
+const antrianRoutes = require('../routes/antrian');
 
 // Middleware untuk connect DB
 app.use(async (req, res, next) => {
@@ -59,6 +63,11 @@ app.use(async (req, res, next) => {
 
 // Routes
 app.use('/api/antrian', antrianRoutes);
+
+// Tambahkan route untuk halaman utama (sebelum 404 handler)
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public/index.html'));
+});
 
 // 404
 app.use((req, res) => {
