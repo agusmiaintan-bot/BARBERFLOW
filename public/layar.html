@@ -172,7 +172,8 @@
 <script src="/socket.io/socket.io.js"></script>
 
 <script>
-    const socket = io("http://localhost:3001");
+    const API_BASE = "https://barberflow-os64.vercel.app";
+    const socket = io(API_BASE);
 
     // Minta data awal
     socket.emit("ambil-antrian");

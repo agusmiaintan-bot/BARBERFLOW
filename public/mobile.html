@@ -291,7 +291,8 @@ if (!nomorAntrian || nomorAntrian < 1) {
     alert("Nomor tidak valid, menggunakan nomor default: 7");
 }
 
-const socket = io("http://192.168.1.12:3001");
+const API_BASE = "https://barberflow-os64.vercel.app";
+const socket = io(API_BASE);
 
 // gabung ke room spesifik pelanggan-{nomor}
 socket.emit("gabung-room", `pelanggan-${nomorAntrian}`);

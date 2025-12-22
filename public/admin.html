@@ -229,7 +229,8 @@
 
 <script src="/socket.io/socket.io.js"></script>
 <script>
-    const socket = io("http://localhost:3001");
+    const API_BASE = "https://barberflow-os64.vercel.app";
+    const socket = io(API_BASE);
 
     const daftar = document.getElementById("daftarAntrian");
     const tombolTambah = document.getElementById("btnTambah");
