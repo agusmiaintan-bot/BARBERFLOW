@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Antrian = require('../models/antrian');
+const Antrian = require('../model/antrian');
 
 // Tambah antrian
 router.post('/add', async (req, res) => {
@@ -8,6 +8,22 @@ router.post('/add', async (req, res) => {
         const { nama_pelanggan, layanan } = req.body;
         const newAntrian = await Antrian.create({ nama_pelanggan, layanan });
         res.json(newAntrian);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Tambah antrian (endpoint alternatif)
+router.post('/tambah', async (req, res) => {
+    try {
+        const { nama, email, barber } = req.body;
+        const newAntrian = await Antrian.create({ 
+            nama_pelanggan: nama, 
+            email: email,
+            barber: barber,
+            status: 'menunggu'
+        });
+        res.json({ pesan: 'Antrian berhasil ditambahkan', data: newAntrian });
     } catch (err) {
         res.status(500).json({ error: err.message });
     }

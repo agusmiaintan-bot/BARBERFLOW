@@ -1,21 +1,10 @@
-const mongoose = require("mongoose");
+const { Schema, model } = require('mongoose');
 
-/**
- * Skema data antrian barbershop
- */
-const skemaAntrian = new mongoose.Schema({
-    nomor: Number,
-    nama: String,
-    email: String,
-    barber: String,
-    status: {
-        type: String,
-        default: "menunggu"
-    },
-    waktuMasuk: {
-        type: Date,
-        default: Date.now
-    }
+const antrianSchema = new Schema({
+    nama_pelanggan: { type: String, required: true },
+    layanan: { type: String, required: true },
+    status: { type: String, default: 'menunggu' },
+    created_at: { type: Date, default: Date.now }
 });
 
-module.exports = mongoose.model("Antrian", skemaAntrian);
+module.exports = model('Antrian', antrianSchema);
