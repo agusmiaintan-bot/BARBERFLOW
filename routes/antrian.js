@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Antrian = require('../model/antrian');
+const mongoose = require('mongoose');
 
 /**
  * POST /api/antrian/add
@@ -70,9 +71,22 @@ router.get('/', async (req, res) => {
  */
 router.get('/:id', async (req, res) => {
   try {
-    const data = await Antrian.findById(req.params.id);
+    const { id } = req.params;
+    
+    // Validasi ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'ID format tidak valid'
+      });
+    }
+
+    const data = await Antrian.findById(id);
     if (!data) {
-      return res.status(404).json({ error: 'Not Found' });
+      return res.status(404).json({ 
+        error: 'Not Found',
+        message: 'Antrian tidak ditemukan'
+      });
     }
     res.json({ success: true, data });
   } catch (err) {
@@ -85,8 +99,16 @@ router.get('/:id', async (req, res) => {
  */
 router.patch(['/:id', '/status/:id'], async (req, res) => {
   try {
+    const { id } = req.params;
     const { status } = req.body;
     const allowed = ['menunggu', 'dilayani', 'selesai', 'batal'];
+
+    if (!status) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'Status harus diisi'
+      });
+    }
 
     if (!allowed.includes(status)) {
       return res.status(400).json({
@@ -95,16 +117,30 @@ router.patch(['/:id', '/status/:id'], async (req, res) => {
       });
     }
 
+    // Validasi ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'ID format tidak valid. Gunakan 24-character hex string.'
+      });
+    }
+
     const updated = await Antrian.findByIdAndUpdate(
-      req.params.id,
+      id,
       { status, updated_at: Date.now() },
       { new: true }
     );
 
-    if (!updated) return res.status(404).json({ error: 'Not Found' });
+    if (!updated) {
+      return res.status(404).json({ 
+        error: 'Not Found',
+        message: 'Antrian dengan ID tersebut tidak ditemukan'
+      });
+    }
 
-    res.json({ success: true, data: updated });
+    res.json({ success: true, message: 'Status berhasil diupdate', data: updated });
   } catch (err) {
+    console.error('Error update status:', err);
     res.status(500).json({ error: 'Server Error', message: err.message });
   }
 });
@@ -114,11 +150,27 @@ router.patch(['/:id', '/status/:id'], async (req, res) => {
  */
 router.delete('/:id', async (req, res) => {
   try {
-    const deleted = await Antrian.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ error: 'Not Found' });
+    const { id } = req.params;
+    
+    // Validasi ObjectId
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        error: 'Validation Error',
+        message: 'ID format tidak valid'
+      });
+    }
 
-    res.json({ success: true, data: deleted });
+    const deleted = await Antrian.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ 
+        error: 'Not Found',
+        message: 'Antrian tidak ditemukan'
+      });
+    }
+
+    res.json({ success: true, message: 'Antrian berhasil dihapus', data: deleted });
   } catch (err) {
+    console.error('Error delete:', err);
     res.status(500).json({ error: 'Server Error', message: err.message });
   }
 });

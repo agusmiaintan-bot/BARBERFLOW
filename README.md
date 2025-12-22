@@ -205,7 +205,7 @@ BARBERFLOW/
 ├── public/                       # Static files
 │   ├── admin.html               # Admin dashboard
 │   ├── layar.html               # Display screen
-│   └── mobile.html              # Mobile app
+│   └── pelanggan.html           # Customer page
 ├── rute/                         # Alternative routing
 │   └── apiAntrian.js
 ├── routes/

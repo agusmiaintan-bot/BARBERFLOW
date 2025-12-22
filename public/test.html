@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>🧪 BARBERFLOW - Test Page</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        h1 {
+            margin-bottom: 20px;
+            color: #ffff00;
+        }
+        .box {
+            background: #2d2d2d;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+        }
+        input {
+            background: #333;
+            border: 1px solid #00ff00;
+            color: #00ff00;
+            padding: 10px;
+            width: 100%;
+            margin-bottom: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        button {
+            background: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        button:hover {
+            background: #00cc00;
+        }
+        #output {
+            background: #000;
+            border: 1px solid #00ff00;
+            padding: 15px;
+            margin-top: 10px;
+            min-height: 100px;
+            overflow-y: auto;
+            max-height: 300px;
+        }
+        .success { color: #00ff00; }
+        .error { color: #ff0000; }
+        .info { color: #00ffff; }
+        .log { margin: 5px 0; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <img src="logo.png" alt="Logo Barberflow" style="height:60px; margin-bottom:16px; display:block; margin-left:auto; margin-right:auto;">
+        <h1>BARBERFLOW Debug Test</h1>
+        
+        <div class="box">
+            <h2>1️⃣ Test Connection</h2>
+            <button onclick="testConnection()">Test API Connection</button>
+            <button onclick="testDatabase()">Test Database</button>
+            <div id="output"></div>
+        </div>
+
+        <div class="box">
+            <h2>2️⃣ Test Add Antrian</h2>
+            <input type="text" id="testNama" placeholder="Nama Pelanggan" value="Test User">
+            <input type="email" id="testEmail" placeholder="Email" value="test@example.com">
+            <input type="text" id="testLayanan" placeholder="Layanan" value="Potong Rambut">
+            <button onclick="testAddAntrian()">Add Antrian</button>
+            <div id="output2"></div>
+        </div>
+
+        <div class="box">
+            <h2>3️⃣ Test Socket.IO</h2>
+            <button onclick="testSocketIO()">Connect Socket.IO</button>
+            <button onclick="testEmitAntrian()">Emit Ambil Antrian</button>
+            <div id="output3"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
+    <script>
+        const API_BASE = "http://192.168.100.13:3001";
+        
+        let socket = null;
+
+        function log(msg, type = 'info') {
+            const output = document.getElementById('output');
+            const line = document.createElement('div');
+            line.className = `log ${type}`;
+            line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+            console.log(msg);
+        }
+
+        async function testConnection() {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            
+            log(`API_BASE: ${API_BASE}`, 'info');
+            log('Testing API endpoints...', 'info');
+
+            try {
+                // Test 1: Health
+                log('🔍 Testing /api/health...', 'info');
+                const health = await fetch(`${API_BASE}/api/health`);
+                const healthData = await health.json();
+                log(`✅ /api/health: ${JSON.stringify(healthData)}`, 'success');
+
+                // Test 2: Get antrian
+                log('🔍 Testing /api/antrian...', 'info');
+                const antrian = await fetch(`${API_BASE}/api/antrian`);
+                const antrianData = await antrian.json();
+                log(`✅ /api/antrian: ${JSON.stringify(antrianData).substring(0, 100)}...`, 'success');
+
+            } catch (error) {
+                log(`❌ Error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testDatabase() {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            
+            log('Testing database connection...', 'info');
+            try {
+                const response = await fetch(`${API_BASE}/api/antrian`);
+                const data = await response.json();
+                log(`✅ Database connected! Total antrian: ${data.data.length}`, 'success');
+                log(`Data: ${JSON.stringify(data.data).substring(0, 200)}...`, 'info');
+            } catch (error) {
+                log(`❌ Database error: ${error.message}`, 'error');
+            }
+        }
+
+        async function testAddAntrian() {
+            const output = document.getElementById('output2');
+            output.innerHTML = '';
+            
+            const nama = document.getElementById('testNama').value;
+            const email = document.getElementById('testEmail').value;
+            const layanan = document.getElementById('testLayanan').value;
+
+            log('Adding antrian...', 'info', 'output2');
+
+            try {
+                const response = await fetch(`${API_BASE}/api/antrian/tambah`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        nama_pelanggan: nama,
+                        email: email,
+                        layanan: layanan
+                    })
+                });
+
+                const data = await response.json();
+                
+                if (data.success) {
+                    log(`✅ Antrian added successfully!`, 'success', 'output2');
+                    log(`Nomor: ${data.data.nomor}`, 'success', 'output2');
+                    log(`Nama: ${data.data.nama_pelanggan}`, 'success', 'output2');
+                } else {
+                    log(`❌ Error: ${data.message}`, 'error', 'output2');
+                }
+            } catch (error) {
+                log(`❌ Exception: ${error.message}`, 'error', 'output2');
+            }
+
+            function log(msg, type, containerId) {
+                const container = document.getElementById(containerId || 'output');
+                const line = document.createElement('div');
+                line.className = `log ${type}`;
+                line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                container.appendChild(line);
+                container.scrollTop = container.scrollHeight;
+            }
+        }
+
+        async function testSocketIO() {
+            const output = document.getElementById('output3');
+            output.innerHTML = '';
+            
+            logSocket('Connecting to Socket.IO...', 'info');
+            logSocket(`API_BASE: ${API_BASE}`, 'info');
+
+            socket = io(API_BASE);
+
+            socket.on('connect', () => {
+                logSocket('✅ Socket.IO connected!', 'success');
+                logSocket(`Socket ID: ${socket.id}`, 'info');
+            });
+
+            socket.on('error', (error) => {
+                logSocket(`❌ Socket error: ${error}`, 'error');
+            });
+
+            socket.on('disconnect', () => {
+                logSocket('🔴 Socket disconnected', 'error');
+            });
+
+            function logSocket(msg, type) {
+                const line = document.createElement('div');
+                line.className = `log ${type}`;
+                line.textContent = `[${new Date().toLocaleTimeString()}] ${msg}`;
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            }
+        }
+
+        async function testEmitAntrian() {
+            if (!socket || !socket.connected) {
+                document.getElementById('output3').innerHTML = '<div class="log error">❌ Socket tidak connected! Test Socket.IO dulu.</div>';
+                return;
+            }
+
+            const output = document.getElementById('output3');
+            const line = document.createElement('div');
+            line.className = 'log info';
+            line.textContent = `[${new Date().toLocaleTimeString()}] Emit: ambil-antrian`;
+            output.appendChild(line);
+            output.scrollTop = output.scrollHeight;
+
+            socket.emit('ambil-antrian');
+
+            socket.once('data-antrian', (data) => {
+                const line = document.createElement('div');
+                line.className = 'log success';
+                line.textContent = `[${new Date().toLocaleTimeString()}] ✅ Received: ${JSON.stringify(data).substring(0, 100)}...`;
+                output.appendChild(line);
+                output.scrollTop = output.scrollHeight;
+            });
+        }
+    </script>
+</body>
+</html>

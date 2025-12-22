@@ -23,4 +23,5 @@ const chatSchema = new mongoose.Schema({
   timestamps: true
 });
 
-module.exports = mongoose.model('Chat', chatSchema);
+// Export model dengan pengecekan untuk menghindari overwrite
+module.exports = mongoose.models.Chat || mongoose.model('Chat', chatSchema);

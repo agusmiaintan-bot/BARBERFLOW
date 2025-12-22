@@ -13,22 +13,24 @@
         
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
-            color: #fff;
+            color: #e0e6f7;
+            padding: 20px;
         }
         
         .container {
             text-align: center;
             padding: 40px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(22, 33, 62, 0.95);
             backdrop-filter: blur(10px);
             border-radius: 20px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-            max-width: 600px;
+            box-shadow: 0 8px 32px rgba(22, 33, 62, 0.7);
+            max-width: 700px;
+            width: 100%;
         }
         
         h1 {
@@ -58,25 +60,24 @@
         .btn {
             display: inline-block;
             padding: 15px 30px;
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
+            background: linear-gradient(135deg, #233554 0%, #16213e 100%);
+            color: #e0e6f7;
             text-decoration: none;
             border-radius: 10px;
             font-weight: bold;
             transition: all 0.3s;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border: 2px solid #233554;
         }
-        
         .btn:hover {
-            background: rgba(255, 255, 255, 0.3);
+            background: linear-gradient(135deg, #1a1a2e 0%, #233554 100%);
             transform: translateY(-2px);
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+            box-shadow: 0 5px 15px rgba(35, 53, 84, 0.5);
         }
         
         .api-status {
             margin-top: 30px;
             padding: 15px;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(35, 53, 84, 0.7);
             border-radius: 10px;
             font-size: 0.9em;
         }
@@ -99,7 +100,7 @@
         .endpoints {
             margin-top: 20px;
             text-align: left;
-            background: rgba(0, 0, 0, 0.2);
+            background: rgba(35, 53, 84, 0.7);
             padding: 20px;
             border-radius: 10px;
             font-family: 'Courier New', monospace;
@@ -114,7 +115,7 @@
         .endpoint {
             padding: 8px;
             margin: 5px 0;
-            background: rgba(255, 255, 255, 0.1);
+            background: rgba(22, 33, 62, 0.7);
             border-radius: 5px;
         }
         
@@ -132,11 +133,58 @@
         .put { background: #f59e0b; }
         .patch { background: #8b5cf6; }
         .delete { background: #ef4444; }
+        
+        .features {
+            margin-top: 20px;
+            text-align: center;
+            background: rgba(35, 53, 84, 0.7);
+            padding: 20px;
+            border-radius: 10px;
+        }
+        
+        .features h3 {
+            margin-bottom: 15px;
+        }
+        
+        .feature-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .feature {
+            background: linear-gradient(135deg, #233554 0%, #16213e 100%);
+            color: #e0e6f7;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.9em;
+            transition: all 0.3s;
+        }
+        .feature:hover {
+            background: linear-gradient(135deg, #16213e 0%, #233554 100%);
+            color: #fff;
+            transform: translateY(-3px);
+        }
+        
+        @media (max-width: 768px) {
+            .container {
+                padding: 30px 20px;
+            }
+            
+            h1 {
+                font-size: 2em;
+            }
+            
+            .feature-list {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <div class="emoji">💈</div>
+        <img src="logo.png" alt="Logo Barberflow" style="height:60px; margin-bottom:16px; display:block; margin-left:auto; margin-right:auto;">
         <h1>BARBERFLOW</h1>
         <p>Sistem Antrian Barbershop Modern</p>
         
@@ -146,7 +194,7 @@
         </div>
         
         <div class="links">
-            <a href="/mobile.html" class="btn">📱 Mobile App</a>
+            <a href="/pelanggan.html" class="btn">📱 Pelanggan</a>
             <a href="/admin.html" class="btn">👨‍💼 Admin Panel</a>
             <a href="/layar.html" class="btn">📺 Display Screen</a>
         </div>
@@ -155,28 +203,44 @@
             <h3>📡 API Endpoints</h3>
             <div class="endpoint">
                 <span class="method get">GET</span>
-                <span>/api/health</span>
+                <span>/api/health - Health check</span>
             </div>
             <div class="endpoint">
                 <span class="method get">GET</span>
-                <span>/api/antrian</span>
+                <span>/api/antrian - Ambil semua antrian</span>
             </div>
             <div class="endpoint">
                 <span class="method post">POST</span>
-                <span>/api/antrian/tambah</span>
+                <span>/api/antrian/tambah - Tambah antrian baru</span>
+            </div>
+            <div class="endpoint">
+                <span class="method get">GET</span>
+                <span>/api/antrian/:id - Ambil antrian by ID</span>
             </div>
             <div class="endpoint">
                 <span class="method patch">PATCH</span>
-                <span>/api/antrian/:id</span>
+                <span>/api/antrian/:id - Update status antrian</span>
             </div>
             <div class="endpoint">
                 <span class="method delete">DELETE</span>
-                <span>/api/antrian/:id</span>
+                <span>/api/antrian/:id - Hapus antrian</span>
+            </div>
+        </div>
+        
+        <div class="features">
+            <h3>✨ Fitur Sistem</h3>
+            <div class="feature-list">
+                <div class="feature">📱 Antrian Real-time</div>
+                <div class="feature">💬 Chat dengan Admin</div>
+                <div class="feature">🤖 Chatbot Otomatis</div>
+                <div class="feature">📊 Dashboard Admin</div>
+                <div class="feature">📺 Layar Display</div>
+                <div class="feature">📧 Notifikasi Email</div>
             </div>
         </div>
         
         <p style="margin-top: 30px; font-size: 0.9em; opacity: 0.7;">
-            Powered by Node.js + Express + MongoDB
+            Powered by Node.js + Express + MongoDB + Socket.io
         </p>
     </div>
 </body>
