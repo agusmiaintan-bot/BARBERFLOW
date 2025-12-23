@@ -1,16 +1,22 @@
+
+// Import express dan inisialisasi router
 const express = require('express');
 const router = express.Router();
+// Import model Antrian untuk operasi database antrian
 const Antrian = require('../model/antrian');
 const mongoose = require('mongoose');
 
 /**
- * POST /api/antrian/add
+ * Endpoint untuk menambah antrian baru
+ * POST /api/antrian/add atau /api/antrian/tambah
  */
 router.post(['/add', '/tambah'], async (req, res) => {
   try {
     const { nama, nama_pelanggan, email, barber, layanan } = req.body;
     const nama_final = nama || nama_pelanggan;
 
+
+    // Validasi nama pelanggan wajib diisi
     if (!nama_final || !nama_final.trim()) {
       return res.status(400).json({
         error: 'Validation Error',
@@ -18,9 +24,13 @@ router.post(['/add', '/tambah'], async (req, res) => {
       });
     }
 
+
+    // Ambil nomor antrian terakhir, lalu tambah 1
     const last = await Antrian.findOne().sort({ nomor: -1 });
     const nomor = last ? last.nomor + 1 : 1;
 
+
+    // Simpan data antrian baru ke database
     const antrian = await Antrian.create({
       nomor,
       nama_pelanggan: nama_final.trim(),
@@ -30,6 +40,7 @@ router.post(['/add', '/tambah'], async (req, res) => {
       status: 'menunggu'
     });
 
+    // Kirim response sukses ke client
     res.status(201).json({
       success: true,
       message: 'Antrian berhasil ditambahkan',
@@ -42,18 +53,25 @@ router.post(['/add', '/tambah'], async (req, res) => {
 });
 
 /**
+ * Endpoint untuk mengambil daftar antrian
  * GET /api/antrian
  */
 router.get('/', async (req, res) => {
   try {
+
+    // Mendukung filter status, skip, dan limit
     const { status, skip = 0, limit = 100 } = req.query;
     const filter = status ? { status } : {};
 
+
+    // Query data antrian dari database
     const data = await Antrian.find(filter)
       .sort({ created_at: -1 })
       .skip(Number(skip))
       .limit(Number(limit));
 
+
+    // Hitung total antrian
     const total = await Antrian.countDocuments(filter);
 
     res.json({

@@ -1,18 +1,25 @@
+
+// Import express dan inisialisasi router
 const express = require('express');
 const router = express.Router();
+// Import model Chat untuk operasi database chat
 const Chat = require('../model/Chat');
 
 /**
- * USER kirim pesan
+ * Endpoint USER kirim pesan ke chat
  * POST /api/chat/user
  */
 router.post('/user', async (req, res) => {
   const { room_id, nama, message } = req.body;
 
+
+  // Validasi input wajib
   if (!room_id || !message) {
     return res.status(400).json({ error: 'room_id dan message wajib diisi' });
   }
 
+
+  // Simpan pesan user ke database
   const chat = await Chat.create({
     room_id,
     sender: 'user',
@@ -20,6 +27,8 @@ router.post('/user', async (req, res) => {
     message
   });
 
+
+  // Kirim response sukses ke client
   res.status(201).json({
     success: true,
     data: chat
@@ -27,22 +36,28 @@ router.post('/user', async (req, res) => {
 });
 
 /**
- * ADMIN kirim pesan
+ * Endpoint ADMIN kirim pesan ke chat
  * POST /api/chat/admin
  */
 router.post('/admin', async (req, res) => {
   const { room_id, message } = req.body;
 
+
+  // Validasi input wajib
   if (!room_id || !message) {
     return res.status(400).json({ error: 'room_id dan message wajib diisi' });
   }
 
+
+  // Simpan pesan admin ke database
   const chat = await Chat.create({
     room_id,
     sender: 'admin',
     message
   });
 
+
+  // Kirim response sukses ke client
   res.status(201).json({
     success: true,
     data: chat
@@ -50,10 +65,12 @@ router.post('/admin', async (req, res) => {
 });
 
 /**
- * Ambil chat per room
+ * Endpoint untuk mengambil chat berdasarkan room
  * GET /api/chat/:room_id
  */
 router.get('/:room_id', async (req, res) => {
+
+  // Query chat dari database berdasarkan room_id
   const chats = await Chat.find({ room_id: req.params.room_id })
     .sort({ createdAt: 1 });
 

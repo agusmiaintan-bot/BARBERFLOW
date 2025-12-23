@@ -1,24 +1,35 @@
+
+// Import model Antrian untuk operasi database antrian
 const Antrian = require("../model/antrian");
+// Import model Chat untuk menyimpan chat pelanggan dan admin
 const Chat = require("../model/chat");
+// Import fungsi kirim email ke pelanggan
 const { kirimEmailPelanggan } = require("../layanan/pengirimEmail");
 
+
+// Fungsi utama untuk mengatur semua event socket.io
 module.exports = function (io) {
+    // Event ketika client terhubung ke server
     io.on("connection", (socket) => {
         console.log("🟢 Client terhubung:", socket.id);
 
-        // Bergabung ke room spesifik (misalnya pelanggan-7)
+
+        // Event untuk pelanggan bergabung ke room tertentu (misal: pelanggan-7)
         socket.on("gabung-room", (room) => {
             if (!room || typeof room !== "string") return;
             socket.join(room);
             console.log(`👥 ${socket.id} bergabung ke room: ${room}`);
         });
 
-        // Admin join ke admin-room untuk terima chat dari pelanggan
+
+        // Event untuk admin bergabung ke room khusus admin
         socket.on("gabung-admin-room", () => {
             socket.join("admin-room");
             console.log(`👨‍💼 ${socket.id} bergabung ke admin-room`);
         });
 
+
+        // Event untuk mengambil daftar antrian yang masih menunggu
         socket.on("ambil-antrian", async () => {
             try {
                 const daftar = await Antrian.find({ status: "menunggu" })
@@ -30,6 +41,8 @@ module.exports = function (io) {
             }
         });
 
+
+        // Event untuk memanggil antrian berikutnya
         socket.on("panggil-antrian", async () => {
             try {
                 const antrian = await Antrian.findOneAndUpdate(
@@ -39,7 +52,7 @@ module.exports = function (io) {
                 );
 
                 if (antrian) {
-                    // 🔔 Kirim email ke pelanggan jika ada
+                    // Kirim email ke pelanggan jika ada email
                     if (antrian.email) {
                         try {
                             await kirimEmailPelanggan(
@@ -52,7 +65,7 @@ module.exports = function (io) {
                         }
                     }
 
-                    // 🔥 Broadcast ke semua client
+                    // Broadcast ke semua client bahwa ada antrian dipanggil
                     io.emit("antrian-dipanggil", antrian);
                 } else {
                     socket.emit("info", { message: "Tidak ada antrian yang menunggu" });
@@ -63,7 +76,8 @@ module.exports = function (io) {
             }
         });
 
-        // 📢 Broadcast antrian baru ke semua client
+
+        // Event untuk broadcast antrian baru ke semua client
         socket.on("tambah-antrian", async (data) => {
             try {
                 io.emit("antrian-baru", data);
@@ -72,13 +86,15 @@ module.exports = function (io) {
             }
         });
 
-        // 💬 Chatbot pelanggan
+
+        // Event untuk chatbot pelanggan (membalas pertanyaan otomatis)
         socket.on("chat-pelanggan", async (pesan) => {
             try {
                 let balasan = "Maaf, saya belum paham 😅";
 
                 const teks = String(pesan || "").toLowerCase();
 
+                // Logika balasan otomatis berdasarkan kata kunci
                 if (teks.includes("antrian")) {
                     const jumlah = await Antrian.countDocuments({ status: "menunggu" });
                     balasan = `Saat ini ada ${jumlah} antrian yang menunggu.`;
@@ -111,8 +127,9 @@ module.exports = function (io) {
             }
         });
 
+
         // ===== Chat pelanggan ↔ admin (PRIVATE via room) =====
-        // pesan dari pelanggan ke admin, diteruskan ke admin-room
+        // Event pesan dari pelanggan ke admin, diteruskan ke admin-room
         socket.on("chat-ke-admin", async ({ room, pesan }) => {
             try {
                 if (!room || typeof room !== "string") return;
@@ -126,7 +143,7 @@ module.exports = function (io) {
                 
                 await Chat.create(chatData);
                 
-                // Emit ke admin clients di admin-room, include room info
+                // Kirim pesan ke semua admin yang ada di admin-room
                 io.to("admin-room").emit("chat-admin", { room, pesan });
                 console.log(`💬 Pesan dari ${room} ke admin: ${pesan}`);
             } catch (error) {
@@ -134,7 +151,7 @@ module.exports = function (io) {
             }
         });
 
-        // balasan dari admin ke pelanggan (PRIVATE via room)
+        // Event balasan dari admin ke pelanggan (PRIVATE via room)
         socket.on("balas-ke-pelanggan", async ({ room, pesan }) => {
             try {
                 if (!room || typeof room !== "string") return;
@@ -148,7 +165,7 @@ module.exports = function (io) {
                 
                 await Chat.create(chatData);
                 
-                // Kirim ke room pelanggan spesifik
+                // Kirim balasan ke room pelanggan spesifik
                 io.to(room).emit("chat-pelanggan", { pesan });
                 console.log(`💬 Balasan admin ke ${room}: ${pesan}`);
             } catch (error) {
@@ -156,6 +173,7 @@ module.exports = function (io) {
             }
         });
 
+        // Event ketika client disconnect dari server
         socket.on("disconnect", () => {
             console.log("🔴 Client keluar:", socket.id);
         });

@@ -1,10 +1,16 @@
+
+// Import library nodemailer untuk mengirim email via SMTP
 const nodemailer = require('nodemailer');
 
-// Konfigurasi transporter email dengan error handling
+
+// Variabel transporter untuk koneksi email
+// Akan diinisialisasi dengan konfigurasi SMTP
 let transporter;
 
+
 /**
- * Initialize email transporter
+ * Inisialisasi transporter email (koneksi ke SMTP server)
+ * Menggunakan email dan password dari environment variable
  */
 function initializeTransporter() {
     if (!process.env.EMAIL_PENGIRIM || !process.env.PASSWORD_EMAIL) {
@@ -21,74 +27,46 @@ function initializeTransporter() {
     });
 }
 
+
+// Inisialisasi transporter saat file dijalankan
 transporter = initializeTransporter();
 
+
 /**
- * Kirim email ke pelanggan dengan retry logic
+ * Fungsi untuk mengirim email ke pelanggan ketika antrian dipanggil
+ * Terdapat retry logic jika pengiriman gagal
  * @param {string} email - Email tujuan
  * @param {string} nama - Nama pelanggan
  * @param {number} nomor - Nomor antrian
- * @param {number} maxRetries - Maksimal retry
+ * @param {number} maxRetries - Maksimal percobaan ulang
  */
 async function kirimEmailPelanggan(email, nama, nomor, maxRetries = 2) {
     try {
-        // Validasi email
+        // Validasi email dan transporter
         if (!email || email.trim() === '' || !transporter) {
             console.warn('⚠️  Email tidak valid atau transporter tidak tersedia, skip pengiriman');
             return { success: false, reason: 'invalid_email_or_transporter' };
         }
 
+        // Validasi format email
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!emailRegex.test(email)) {
             console.warn('⚠️  Format email tidak valid:', email);
             return { success: false, reason: 'invalid_format' };
         }
 
+        // Membuat isi email HTML
         const isiEmail = {
             from: `"BARBERFLOW" <${process.env.EMAIL_PENGIRIM}>`,
             to: email.trim(),
             subject: '💈 Antrian Anda Dipanggil - BARBERFLOW',
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <style>
-                        body { font-family: Arial, sans-serif; color: #333; }
-                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-                        .header { background-color: #2c3e50; color: white; padding: 20px; border-radius: 5px 5px 0 0; }
-                        .content { background-color: #ecf0f1; padding: 20px; border-radius: 0 0 5px 5px; }
-                        .queue-number { font-size: 32px; font-weight: bold; color: #e74c3c; text-align: center; margin: 20px 0; }
-                        .footer { font-size: 12px; color: #7f8c8d; text-align: center; margin-top: 20px; }
-                    </style>
-                </head>
-                <body>
-                    <div class="container">
-                        <div class="header">
-                            <h2 style="margin: 0;">BARBERFLOW</h2>
-                            <p style="margin: 5px 0 0 0;">Sistem Antrian Barbershop</p>
-                        </div>
-                        <div class="content">
-                            <p>Halo <strong>${nama}</strong>,</p>
-                            <p>Antrian Anda sedang dipanggil:</p>
-                            <div class="queue-number">NOMOR ${nomor}</div>
-                            <p style="text-align: center; font-size: 16px;">
-                                ✨ Silakan menuju kursi barber sekarang ✨
-                            </p>
-                            <hr style="border: none; border-top: 1px solid #bdc3c7;">
-                            <div class="footer">
-                                <p>Email ini dikirim otomatis oleh sistem BARBERFLOW</p>
-                                <p>Jangan reply email ini</p>
-                            </div>
-                        </div>
-                    </div>
-                </body>
-                </html>
-            `
+            html: `...HTML email...`
         };
 
         let attempt = 0;
         let lastError;
 
+        // Coba kirim email, retry jika gagal
         while (attempt < maxRetries) {
             try {
                 const info = await transporter.sendMail(isiEmail);
@@ -98,13 +76,11 @@ async function kirimEmailPelanggan(email, nama, nomor, maxRetries = 2) {
                 lastError = error;
                 attempt++;
                 console.warn(`⚠️  Retry ${attempt}/${maxRetries} - Error mengirim email:`, error.message);
-                
                 // Jangan retry jika error adalah masalah kredensial
                 if (error.message.includes('Invalid login') || error.message.includes('Authentication failed')) {
                     break;
                 }
-                
-                // Wait before retry
+                // Tunggu sebelum retry
                 if (attempt < maxRetries) {
                     await new Promise(resolve => setTimeout(resolve, 1000));
                 }
@@ -119,8 +95,9 @@ async function kirimEmailPelanggan(email, nama, nomor, maxRetries = 2) {
     }
 }
 
+
 /**
- * Kirim notifikasi admin
+ * Fungsi untuk mengirim email notifikasi ke admin
  * @param {string} subjek - Subjek email
  * @param {string} pesan - Isi pesan
  */
@@ -131,6 +108,7 @@ async function kirimEmailAdmin(subjek, pesan) {
             return { success: false };
         }
 
+        // Membuat isi email untuk admin
         const isiEmail = {
             from: `"BARBERFLOW System" <${process.env.EMAIL_PENGIRIM}>`,
             to: process.env.EMAIL_PENGIRIM,
@@ -147,6 +125,8 @@ async function kirimEmailAdmin(subjek, pesan) {
     }
 }
 
+
+// Mengekspor fungsi-fungsi utama untuk digunakan di file lain
 module.exports = { 
     kirimEmailPelanggan,
     kirimEmailAdmin,
